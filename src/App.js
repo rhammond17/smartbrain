@@ -115,9 +115,11 @@ const particlesOptions = {
   retina_detect: false,
 };
 
-// Test faces:
-// https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=800&q=80
-// https://www.startpage.com/av/proxy-image?piurl=https%3A%2F%2Fi.ytimg.com%2Fvi%2FjYU53DYXokY%2Fmaxresdefault.jpg&sp=1587672277Tbe58f8e8a709c5d5b98d5b5ba5ec2719c0ec7b95e0dd31a9ef0556d30522adca
+/*
+Test faces:
+https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=800&q=80
+https://www.startpage.com/av/proxy-image?piurl=https%3A%2F%2Fi.ytimg.com%2Fvi%2FjYU53DYXokY%2Fmaxresdefault.jpg&sp=1587672277Tbe58f8e8a709c5d5b98d5b5ba5ec2719c0ec7b95e0dd31a9ef0556d30522adca
+*/
 class App extends Component {
   constructor() {
     super();
@@ -127,8 +129,27 @@ class App extends Component {
       box: {},
       route: 'signin',
       isSignedIn: false,
+      user: {
+        id: '',
+        name: '',
+        email: '',
+        entries: 0,
+        joined: '',
+      },
     };
   }
+
+  loadUser = (data) => {
+    this.setState({
+      user: {
+        id: data.id,
+        name: data.name,
+        email: data.email,
+        entries: data.entries,
+        joined: data.joined,
+      },
+    });
+  };
 
   calculateFaceLocation = (data) => {
     const clarifaiFace = data.outputs[0].data.regions[0].region_info.bounding_box;
@@ -153,11 +174,22 @@ class App extends Component {
 
   onButtonSubmit = () => {
     this.setState({ imageURL: this.state.input });
-    app.models
-      .predict(Clarifai.FACE_DETECT_MODEL, this.state.input)
-      .then((response) =>
-        this.displayFaceBox(this.calculateFaceLocation(response)).catch((err) => console.log(err))
-      );
+    app.models.predict(Clarifai.FACE_DETECT_MODEL, this.state.input).then((response) => {
+      if (response) {
+        fetch('http://localhost:3001/image', {
+          method: 'put',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: this.state.user.id,
+          }),
+        })
+          .then((response) => response.json())
+          .then((count) => {
+            this.setState(Object.assign(this.state.user, { entries: count }));
+          });
+      }
+      this.displayFaceBox(this.calculateFaceLocation(response)).catch((err) => console.log(err));
+    });
   };
 
   onRouteChange = (route) => {
@@ -170,7 +202,7 @@ class App extends Component {
   };
 
   render() {
-    const { isSignedIn, imageURL, route, box } = this.state;
+    const { isSignedIn, imageURL, route, box, user } = this.state;
     return (
       <div className='App'>
         <Particles className='particles' params={particlesOptions} />
@@ -178,7 +210,7 @@ class App extends Component {
         {route === 'home' ? (
           <div>
             <Logo />
-            <Rank />
+            <Rank name={user.name} entries={user.entries} />
             <ImageLinkForm
               onInputChange={this.onInputChange}
               onButtonSubmit={this.onButtonSubmit}
@@ -186,9 +218,9 @@ class App extends Component {
             <FaceRecognition box={box} imageURL={imageURL} />
           </div>
         ) : route === 'signin' ? (
-          <Signin onRouteChange={this.onRouteChange} />
+          <Signin loadUser={this.loadUser} onRouteChange={this.onRouteChange} />
         ) : (
-          <Register onRouteChange={this.onRouteChange} />
+          <Register loadUser={this.loadUser} onRouteChange={this.onRouteChange} />
         )}
       </div>
     );
