@@ -113,7 +113,7 @@ const particlesOptions = {
 const initialState = {
   input: '',
   imageURL: '',
-  box: {},
+  faceBoxes: [],
   route: 'signin',
   isSignedIn: false,
   user: {
@@ -129,6 +129,7 @@ const initialState = {
 Test faces:
 https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=800&q=80
 https://www.startpage.com/av/proxy-image?piurl=https%3A%2F%2Fi.ytimg.com%2Fvi%2FjYU53DYXokY%2Fmaxresdefault.jpg&sp=1587672277Tbe58f8e8a709c5d5b98d5b5ba5ec2719c0ec7b95e0dd31a9ef0556d30522adca
+https://upload.wikimedia.org/wikipedia/commons/4/41/SmallFaces1966.png
 */
 class App extends Component {
   constructor() {
@@ -148,21 +149,27 @@ class App extends Component {
     });
   };
 
-  calculateFaceLocation = (data) => {
-    const clarifaiFace = data.outputs[0].data.regions[0].region_info.bounding_box;
+  calculateFaceLocations = (data) => {
+    const clarifaiFace = data.outputs[0].data.regions;
     const image = document.getElementById('inputimage');
     const width = Number(image.width);
     const height = Number(image.height);
-    return {
-      leftCol: clarifaiFace.left_col * width,
-      topRow: clarifaiFace.top_row * height,
-      rightCol: width - clarifaiFace.right_col * width,
-      bottomRow: height - clarifaiFace.bottom_row * height,
-    };
+    let faceBoxes = [];
+    clarifaiFace.forEach((region) => {
+      const box = region.region_info.bounding_box;
+      faceBoxes.push({
+        leftCol: box.left_col * width,
+        topRow: box.top_row * height,
+        rightCol: width - box.right_col * width,
+        bottomRow: height - box.bottom_row * height,
+      });
+    });
+
+    return faceBoxes;
   };
 
-  displayFaceBox = (box) => {
-    this.setState({ box: box });
+  displayFaceBox = (boxes) => {
+    this.setState({ faceBoxes: boxes });
   };
 
   onInputChange = (event) => {
@@ -194,7 +201,7 @@ class App extends Component {
             })
             .catch(console.log);
         }
-        this.displayFaceBox(this.calculateFaceLocation(response));
+        this.displayFaceBox(this.calculateFaceLocations(response));
       })
       .catch((err) => console.log(err));
   };
@@ -209,7 +216,7 @@ class App extends Component {
   };
 
   render() {
-    const { isSignedIn, imageURL, route, box, user } = this.state;
+    const { isSignedIn, imageURL, route, faceBoxes, user } = this.state;
     return (
       <div className='App'>
         <Particles className='particles' params={particlesOptions} />
@@ -222,7 +229,7 @@ class App extends Component {
               onInputChange={this.onInputChange}
               onButtonSubmit={this.onButtonSubmit}
             />
-            <FaceRecognition box={box} imageURL={imageURL} />
+            <FaceRecognition faceBoxes={faceBoxes} imageURL={imageURL} />
           </div>
         ) : route === 'signin' ? (
           <Signin loadUser={this.loadUser} onRouteChange={this.onRouteChange} />
