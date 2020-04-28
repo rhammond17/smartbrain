@@ -14,7 +14,8 @@
     "tachyons": "^4.11.1"
   },
   "scripts": {
-    "start": "BROWSER='chrome' react-scripts start",
+    "start": "react-scripts start",
+    "start:dev": "BROWSER='chrome' react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test"
   },
