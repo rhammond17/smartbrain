@@ -16,6 +16,7 @@
   "scripts": {
     "start": "react-scripts start",
     "start:dev": "BROWSER='chrome' react-scripts start",
+    "start:dev-heroku": "BROWSER='chrome' REACT_APP_BACKEND_URL='https://hidden-journey-41590.herokuapp.com' react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test"
   },
