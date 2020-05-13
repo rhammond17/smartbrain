@@ -3,6 +3,22 @@
 smartbrain app from Complete Web Developer course at Udemy
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
+## Heroku
+
+Deployed to Heroku as randyh-smartbrain:
+URL: https://randyh-smartbrain.herokuapp.com
+
+```bash
+heroku login
+git push heroku master
+```
+
+### Environmental Variables
+
+These are set in Heroku:
+
+- REACT_APP_BACKEND_URL - URL to the backend service (randyh-smartbrain-api)
+
 ## Available Scripts
 
 In the project directory, you can run:
